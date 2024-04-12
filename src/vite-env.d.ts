@@ -1,43 +1,44 @@
 /// <reference types="vite/client" />
 
-interface EIP1193Provider {
+interface Provider {
+  // origin
   isStatus?: boolean;
   host?: string;
   path?: string;
-  sendAsync?: (request: { method: string, params?: Array<unknown> }, callback: (error: Error | null, response: unknown) => void) => void
-  send?: (request: { method: string, params?: Array<unknown> }, callback: (error: Error | null, response: unknown) => void) => void
-  request: (request: { method: string, params?: Array<unknown> }) => Promise<unknown>
-  // update by uom6uoc
+  sendAsync?: (
+    request: { method: string; params?: Array<unknown> },
+    callback: (error: Error | null, response: unknown) => void
+  ) => void;
+  send?: (
+    request: { method: string; params?: Array<unknown> },
+    callback: (error: Error | null, response: unknown) => void
+  ) => void;
+  request: (request: { method: string; params?: Array<unknown> }) => Promise<unknown>;
+  // TODO: check
   isConnected(): boolean;
-  on(eventName: "connect", listener: (info: ProviderInfo) => void): this;
-  on(eventName: "disconnect", listener: (error: ProviderError) => void): this;
-  on(eventName: "message", listener: (message: ProviderMessage) => void): this;
-  on(
-    eventName: "chainChanged",
-    listener: (chainId: ProviderChainId) => void
-  ): this;
-  on(
-    eventName: "accountsChanged",
-    listener: (accounts: ProviderAccounts) => void
-  ): this;
+  on(eventName: 'connect', listener: (info: ProviderInfo) => void): this;
+  on(eventName: 'disconnect', listener: (error: ProviderError) => void): this;
+  on(eventName: 'message', listener: (message: ProviderMessage) => void): this;
+  on(eventName: 'chainChanged', listener: (chainId: ProviderChainId) => void): this;
+  on(eventName: 'accountsChanged', listener: (accounts: ProviderAccounts) => void): this;
+  getSigner: () => void;
 }
 
-
-interface EIP6963ProviderInfo {
+interface ProviderInfo {
   rdns: string;
   uuid: string;
   name: string;
   icon: string;
 }
 
-interface EIP6963ProviderDetail {
-  info: EIP6963ProviderInfo;
+interface ProviderDetail {
+  info: ProviderInfo;
   provider: EIP1193Provider;
 }
 
-type EIP6963AnnounceProviderEvent = {
-  detail:{
-    info: EIP6963ProviderInfo,
-    provider: Readonly<EIP1193Provider>
-  }
-}
+type AnnounceProviderEvent = {
+  detail: {
+    info: ProviderInfo;
+    provider: Readonly<EIP1193Provider>;
+  };
+};

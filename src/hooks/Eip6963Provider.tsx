@@ -1,10 +1,11 @@
 import { PropsWithChildren, createContext, useCallback, useEffect, useState } from 'react';
+import { addProviderEventListener, removeProviderEventListener } from '~/utils/events';
 
 type SelectedAccountByWallet = Record<string, string | null>;
 
 interface Eip6963ProviderContext {
-  wallets: Record<string, EIP6963ProviderDetail>;
-  selectedWallet: EIP6963ProviderDetail | null;
+  wallets: Record<string, ProviderDetail>;
+  selectedWallet: ProviderDetail | null;
   selectedAccount: string | null;
   connectWallet: (walletUuid: string) => Promise<void>;
   disConnectWallet: (walletUuid: string) => Promise<void>;
@@ -19,13 +20,13 @@ declare global {
 export const Eip6963ProviderContext = createContext<Eip6963ProviderContext>(null);
 
 export const Eip6963Provider: React.FC<PropsWithChildren> = ({ children }) => {
-  const [wallets, setWallets] = useState<Record<string, EIP6963ProviderDetail>>({});
+  const [wallets, setWallets] = useState<Record<string, ProviderDetail>>({});
   const [selectedWalletUuid, setSelectedWalletUuid] = useState<string | null>(null);
   const [selectedAccountByWalletUuid, setSelectedAccountByWalletUuid] = useState<SelectedAccountByWallet>({});
 
   // Find out about all providers by using EIP-6963
   useEffect(() => {
-    function onAnnouncement(event: EIP6963AnnounceProviderEvent) {
+    function onAnnouncement(event: AnnounceProviderEvent) {
       console.log('[onAnnouncement]:', event);
       setWallets((currentWallets) => ({
         ...currentWallets,
@@ -39,40 +40,24 @@ export const Eip6963Provider: React.FC<PropsWithChildren> = ({ children }) => {
     return () => window.removeEventListener('eip6963:announceProvider', onAnnouncement);
   }, []);
 
-  useEffect(() => {
-    try {
-      if (wallets[selectedWalletUuid]) {
-        const wallet = wallets[selectedWalletUuid];
-        // wallet.provider.on('connect', (data) => {
-        //   console.log('connect:', data);
-        // });
-        // wallet.provider.on('disconnect', (data) => {
-        //   console.log('disconnect:', data);
-        // });
-        wallet.provider.on('chainChanged', (data) => {
-          console.log('chainChanged:', data);
-          // window.location.reload();
-        });
-        wallet.provider.on('accountsChanged', (data) => {
-          console.log('accountsChanged:', data);
-        });
-        // wallet.provider.on('message', (data) => {
-        //   console.log('message:', data);
-        // });
-      }
-    } catch (error) {
-      console.log('error');
-    }
-  }, [selectedWalletUuid, wallets]);
+  const callBack = {
+    accountsChanged: async (wallet: any, accounts: string) => {
+      console.log({ wallet }, accounts);
+      setSelectedAccountByWalletUuid((currentAccounts) => ({
+        ...currentAccounts,
+        [wallet.info.uuid]: accounts[0],
+      }));
+    },
+  };
 
   const connectWallet = useCallback(
     async (walletUuid: string) => {
       try {
         const wallet = wallets[walletUuid];
-        console.log('[connectWallet- wallet]:', wallet);
+        console.log('[eip6963] connectWallet:', wallet);
 
-        const accounts = (await wallet.provider.request({ method: 'eth_requestAccounts' })) as string[];
-        console.log('[connectWallet- accounts]:', accounts);
+        const accounts = await wallet.provider.request({ method: 'eth_requestAccounts' });
+        console.log('[eip6963] connectAccounts:', accounts);
 
         if (accounts?.[0]) {
           setSelectedWalletUuid(wallet.info.uuid);
@@ -80,9 +65,13 @@ export const Eip6963Provider: React.FC<PropsWithChildren> = ({ children }) => {
             ...currentAccounts,
             [wallet.info.uuid]: accounts[0],
           }));
+
+          console.log('[eip6963] : Selected Account', accounts[0]);
         }
+
+        addProviderEventListener({ type: 'eip6963', wallet: wallet, callback: callBack });
       } catch (error) {
-        console.error('Failed to connect to provider:', error);
+        console.error('[eip6963]Failed to connect to MetaMask', error);
       }
     },
     [wallets]
@@ -93,6 +82,11 @@ export const Eip6963Provider: React.FC<PropsWithChildren> = ({ children }) => {
       try {
         if (walletUuid === selectedWalletUuid) {
           setSelectedWalletUuid(null);
+
+          const wallet = wallets[walletUuid];
+          removeProviderEventListener({ type: 'eip6963', wallet: wallet, callback: callBack });
+
+          console.log('[eip6963] disConnectWallet:', wallet);
         }
       } catch (error) {
         console.log('error:', error);
@@ -100,8 +94,6 @@ export const Eip6963Provider: React.FC<PropsWithChildren> = ({ children }) => {
     },
     [selectedWalletUuid]
   );
-
-  // const chainChanged = useCallback(async (walletUuid: string) => {}, [wallets]);
 
   const contextValue: Eip6963ProviderContext = {
     wallets,

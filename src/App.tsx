@@ -1,24 +1,28 @@
 import './App.css';
+import { useState } from 'react';
 import { DiscoverWalletProviders } from '~/components/DiscoverWalletProviders';
 import { Eip6963Provider } from '~/hooks/Eip6963Provider';
 import { WindowProvider } from '~/hooks/WindowProvider';
-import { ProviderType } from '~/types';
+import styles from './App.module.css';
+
+import type { ProviderType } from '~/types';
 
 function App() {
-  const PROVIDER_TYPE: ProviderType = 'window'; // "window", "eip6963"
-
   return (
-    <>
-      {PROVIDER_TYPE === 'window' ? (
+    <div className={styles.main}>
+      <div className={styles.mainBox}>
+        <h4>window.ethereum</h4>
         <WindowProvider>
-          <DiscoverWalletProviders type={PROVIDER_TYPE} />
+          <DiscoverWalletProviders type={'window'} />
         </WindowProvider>
-      ) : (
+      </div>
+      <div className={styles.mainBox}>
+        <h4>eip6963</h4>
         <Eip6963Provider>
-          <DiscoverWalletProviders type={PROVIDER_TYPE} />
+          <DiscoverWalletProviders type={'eip6963'} />
         </Eip6963Provider>
-      )}
-    </>
+      </div>
+    </div>
   );
 }
 

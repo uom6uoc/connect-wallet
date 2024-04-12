@@ -4,6 +4,9 @@
   align-items: center;
 }
 
+.walletDetails {
+}
+
 .logo {
   display: flex;
   flex-flow: row nowrap;
@@ -29,8 +32,37 @@
   display: flex;
   flex-flow: column wrap;
   justify-content: center;
-  align-items: center;
-  align-content: center;
+  align-items: start;
+  align-content: start;
 
   padding: 0.6em 1.2em;
+}
+
+.providers span {
+  text-align: start;
+  padding: 8px 0;
+  word-break: break-all;
+}
+
+.providers strong {
+  color: #aaa;
+}
+
+.transaction {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transaction .input {
+  display: flex;
+  width: 100%;
+}
+
+.transaction .input label {
+  width: 100px;
+}
+
+.transaction .input input {
+  width: 100%;
 }
